@@ -1,0 +1,149 @@
+/* ============================================
+   DASHBOARD — Page-specific styles
+   ============================================ */
+
+/* ── Checkout detail panel (laptop-details page) ── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.detail-hero {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: var(--radius);
+  color: #fff;
+  padding: 2rem;
+  display: flex; align-items: center; gap: 1.5rem;
+  position: relative; overflow: hidden;
+}
+.detail-hero::after {
+  content: '💻';
+  position: absolute; right: 2rem; top: 50%;
+  transform: translateY(-50%);
+  font-size: 5rem;
+  opacity: .2;
+}
+.detail-hero-icon {
+  width: 64px; height: 64px; border-radius: 16px;
+  background: rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; flex-shrink: 0;
+}
+.detail-hero h2 { font-size: 1.5rem; margin-bottom: .25rem; }
+.detail-hero .hero-meta { font-size: .9rem; opacity: .8; }
+.detail-info-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+.detail-info-card h4 {
+  font-size: .875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.detail-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .9rem;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-row .label { color: var(--text-muted); }
+.detail-row .value { font-weight: 600; text-align: right; }
+
+/* ── Countdown timer ── */
+.countdown-box {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+.countdown-box.overdue { border: 2px solid var(--danger); }
+.countdown-label { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: .75rem; }
+.countdown-digits {
+  display: flex; justify-content: center; gap: .75rem;
+  margin: .75rem 0;
+}
+.countdown-unit { text-align: center; }
+.countdown-num {
+  font-family: var(--font-head);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  display: block;
+  line-height: 1;
+}
+.countdown-box.overdue .countdown-num { color: var(--danger); }
+.countdown-sep {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1.1;
+}
+.countdown-unit-label { font-size: .7rem; color: var(--text-muted); font-weight: 600; }
+
+/* ── Admin quick actions ── */
+.quick-actions {
+  display: flex; gap: .75rem; flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+/* ── History timeline ── */
+.history-list { display: flex; flex-direction: column; gap: .75rem; }
+.history-item {
+  display: flex; gap: 1rem; align-items: flex-start;
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  border-left: 3px solid var(--border);
+  transition: box-shadow var(--transition);
+}
+.history-item:hover { box-shadow: var(--shadow-md); }
+.history-item.returned { border-left-color: var(--success); }
+.history-item.active   { border-left-color: var(--secondary); }
+.history-item.overdue  { border-left-color: var(--danger); }
+.history-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.history-icon.returned { background: #D1FAE5; }
+.history-icon.active   { background: #DBEAFE; }
+.history-icon.overdue  { background: #FEE2E2; }
+.history-body { flex: 1; }
+.history-title { font-weight: 600; font-size: .9rem; }
+.history-meta { font-size: .78rem; color: var(--text-muted); margin-top: .2rem; }
+.history-time { font-size: .75rem; color: var(--text-muted); white-space: nowrap; }
+
+/* ── Admin user table tweaks ── */
+.user-cell { display: flex; align-items: center; gap: .6rem; }
+.user-cell .avatar-sm {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.overdue-highlight { color: var(--danger); font-weight: 600; }
+
+/* ── Reports / summary chart area ── */
+.chart-placeholder {
+  background: #F3F4F6;
+  border-radius: var(--radius-sm);
+  height: 180px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: .875rem;
+  margin-top: .75rem;
+}
+
+@media (max-width: 768px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .detail-hero::after { display: none; }
+}

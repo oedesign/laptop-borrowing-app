@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — LaptopTrack</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+<!-- Page loader -->
+<div id="page-loader">
+  <div class="loader-brand">Laptop<span>Track</span></div>
+  <div class="spinner dark"></div>
+</div>
+
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- Mobile topbar -->
+<div class="topbar">
+  <button class="menu-toggle" id="menu-toggle" aria-label="Open menu">☰</button>
+  <span class="topbar-brand">Laptop<span>Track</span></span>
+</div>
+
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💻</div>
+      <div class="brand-name">Laptop<span>Track</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a href="dashboard.html" class="nav-link" data-page="dashboard">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="history.html" class="nav-link" data-page="history">
+        <span class="nav-icon">📋</span> My History
+      </a>
+      <span class="nav-section-label">Account</span>
+      <a href="#" class="nav-link" data-page="profile">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar">—</div>
+        <div class="user-info">
+          <div class="user-name">Loading...</div>
+          <div class="user-role">Student</div>
+        </div>
+      </div>
+      <div class="d-flex align-center gap-1 mb-1" style="justify-content:space-between">
+        <span class="fs-sm" style="color:rgba(255,255,255,.5)">Theme</span>
+        <button id="theme-toggle" title="Toggle dark/light mode">🌙</button>
+      </div>
+      <button class="btn-logout" id="btn-logout">↩ Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1>Hello, <span id="welcome-name">there</span> 👋</h1>
+      <p>Browse available laptops and manage your checkouts below.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">💻</div>
+        <div>
+          <div class="stat-label">Total Laptops</div>
+          <div class="stat-value" id="stat-total">—</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div>
+          <div class="stat-label">Available</div>
+          <div class="stat-value" id="stat-available">—</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon yellow">📤</div>
+        <div>
+          <div class="stat-label">Borrowed</div>
+          <div class="stat-value" id="stat-borrowed">—</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red">⚠️</div>
+        <div>
+          <div class="stat-label">Overdue</div>
+          <div class="stat-value" id="stat-overdue">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="form-control" placeholder="Search by name, brand, model…" />
+      </div>
+      <select id="status-filter" class="form-control filter-select">
+        <option value="">All Statuses</option>
+        <option value="available">Available</option>
+        <option value="borrowed">Borrowed</option>
+        <option value="overdue">Overdue</option>
+      </select>
+    </div>
+
+    <!-- Laptop Grid -->
+    <div id="laptop-grid" class="laptop-grid">
+      <div class="empty-state">
+        <div class="empty-icon">💻</div>
+        <h3>Loading laptops…</h3>
+      </div>
+    </div>
+  </main>
+
+</div><!-- /.app-layout -->
+
+<!-- Bottom nav (mobile) -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="dashboard.html" class="bottom-nav-link active" data-page="dashboard">
+      <span class="bnl-icon">🏠</span> Home
+    </a>
+    <a href="history.html" class="bottom-nav-link" data-page="history">
+      <span class="bnl-icon">📋</span> History
+    </a>
+    <a href="#" class="bottom-nav-link" data-page="profile">
+      <span class="bnl-icon">👤</span> Profile
+    </a>
+  </div>
+</nav>
+
+<!-- Borrow modal -->
+<div class="modal-overlay" id="borrow-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Borrow Laptop</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="mb-2">You are about to borrow <strong id="modal-laptop-name"></strong>.</p>
+      <div class="form-group">
+        <label class="form-label" for="loan-hours">Loan duration</label>
+        <select id="loan-hours" class="form-control">
+          <option value="1">1 hour</option>
+          <option value="2">2 hours</option>
+          <option value="3" selected>3 hours</option>
+          <option value="6">6 hours</option>
+          <option value="24">1 day (24 hours)</option>
+        </select>
+        <span class="form-hint">The laptop must be returned by the calculated due time.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close">Cancel</button>
+      <button class="btn btn-primary" id="confirm-borrow-btn">Confirm Borrow</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

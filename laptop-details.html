@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laptop Details — LaptopTrack</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+<div id="page-loader">
+  <div class="loader-brand">Laptop<span>Track</span></div>
+  <div class="spinner dark"></div>
+</div>
+
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="topbar">
+  <button class="menu-toggle" id="menu-toggle">☰</button>
+  <span class="topbar-brand">Laptop<span>Track</span></span>
+</div>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💻</div>
+      <div class="brand-name">Laptop<span>Track</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a href="dashboard.html" class="nav-link" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a href="history.html"   class="nav-link" data-page="history"  ><span class="nav-icon">📋</span> My History</a>
+      <span class="nav-section-label">Account</span>
+      <a href="#" class="nav-link" data-page="profile"><span class="nav-icon">👤</span> Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar">—</div>
+        <div class="user-info">
+          <div class="user-name">Loading...</div>
+          <div class="user-role">Student</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">↩ Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <a href="dashboard.html" class="btn btn-outline btn-sm mb-2">← Back to Dashboard</a>
+      <h1 id="detail-title">Laptop Details</h1>
+    </div>
+
+    <div id="detail-content">
+      <div class="empty-state"><div class="empty-icon">⏳</div><h3>Loading…</h3></div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="dashboard.html" class="bottom-nav-link active"><span class="bnl-icon">🏠</span> Home</a>
+    <a href="history.html"   class="bottom-nav-link"><span class="bnl-icon">📋</span> History</a>
+    <a href="#"              class="bottom-nav-link"><span class="bnl-icon">👤</span> Profile</a>
+  </div>
+</nav>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, logoutUser }     from "./js/auth.js";
+  import { onLaptopChange }              from "./js/laptops.js";
+  import { checkoutLaptop }             from "./js/checkout.js";
+  import { returnLaptop }               from "./js/returns.js";
+  import { showToast, hideLoader, initSidebar, setSidebarUser, countdownHTML } from "./js/ui.js";
+  import { statusBadge, formatDateTime, getCountdown } from "./js/utils.js";
+
+  const params   = new URLSearchParams(location.search);
+  const laptopId = params.get("id");
+  let currentUser, currentProfile, laptop, countdown;
+
+  requireAuth((user, profile) => {
+    currentUser    = user;
+    currentProfile = profile;
+    initSidebar();
+    setSidebarUser(profile);
+    document.getElementById("btn-logout")?.addEventListener("click", () => logoutUser());
+    hideLoader();
+
+    if (!laptopId) {
+      document.getElementById("detail-content").innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><h3>No laptop specified.</h3></div>`;
+      return;
+    }
+
+    onLaptopChange(laptopId, (l) => {
+      laptop = l;
+      render();
+    });
+  });
+
+  function render() {
+    document.getElementById("detail-title").textContent = laptop.laptopName;
+    const cd = laptop.dueTime ? getCountdown(laptop.dueTime) : null;
+
+    document.getElementById("detail-content").innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-hero">
+          <div class="detail-hero-icon">💻</div>
+          <div>
+            <h2>${laptop.laptopName}</h2>
+            <div class="hero-meta">${laptop.brand} · ${laptop.model}</div>
+            <div class="mt-1">${statusBadge(laptop.status)}</div>
+          </div>
+        </div>
+
+        ${cd ? countdownHTML(cd) : ""}
+
+        <div class="detail-info-card">
+          <h4>Device Info</h4>
+          <div class="detail-row"><span class="label">Brand</span><span class="value">${laptop.brand}</span></div>
+          <div class="detail-row"><span class="label">Model</span><span class="value">${laptop.model}</span></div>
+          <div class="detail-row"><span class="label">Serial No.</span><span class="value">${laptop.serialNumber || "—"}</span></div>
+          <div class="detail-row"><span class="label">Status</span><span class="value">${statusBadge(laptop.status)}</span></div>
+        </div>
+
+        <div class="detail-info-card">
+          <h4>Checkout Info</h4>
+          <div class="detail-row"><span class="label">Borrower</span><span class="value">${laptop.borrowerName || "—"}</span></div>
+          <div class="detail-row"><span class="label">Checked Out</span><span class="value">${formatDateTime(laptop.checkoutTime)}</span></div>
+          <div class="detail-row"><span class="label">Due Time</span><span class="value">${formatDateTime(laptop.dueTime)}</span></div>
+          <div class="detail-row"><span class="label">Returned</span><span class="value">${formatDateTime(laptop.returnTime)}</span></div>
+        </div>
+
+        ${laptop.notes ? `<div class="detail-info-card"><h4>Notes</h4><p class="fs-sm">${laptop.notes}</p></div>` : ""}
+
+        <div style="grid-column:1/-1; display:flex; gap:.75rem; flex-wrap:wrap;">
+          ${laptop.status === "available"
+            ? `<button class="btn btn-primary" id="btn-borrow">Borrow This Laptop</button>`
+            : laptop.status !== "available" && laptop.borrowerId === currentUser?.uid
+            ? `<button class="btn btn-success" id="btn-return">Return This Laptop</button>`
+            : ""}
+          <a href="dashboard.html" class="btn btn-outline">← Back</a>
+        </div>
+      </div>
+    `;
+
+    // Live countdown tick
+    if (cd && laptop.dueTime) {
+      clearInterval(countdown);
+      countdown = setInterval(() => {
+        const live = getCountdown(laptop.dueTime);
+        if (!live) return;
+        document.getElementById("cd-hours").textContent = String(live.hours).padStart(2,"0");
+        document.getElementById("cd-mins").textContent  = String(live.minutes).padStart(2,"0");
+        document.getElementById("cd-secs").textContent  = String(live.seconds).padStart(2,"0");
+      }, 1000);
+    }
+
+    document.getElementById("btn-borrow")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true; btn.innerHTML = `<span class="spinner"></span>`;
+      try {
+        const { dueTime } = await checkoutLaptop(laptopId, {
+          uid: currentUser.uid, displayName: currentUser.displayName, email: currentUser.email
+        });
+        showToast(`Borrowed! Due: ${dueTime.toLocaleTimeString()}`, "success");
+      } catch(err) { showToast(err.message, "error"); btn.disabled = false; btn.textContent = "Borrow This Laptop"; }
+    });
+
+    document.getElementById("btn-return")?.addEventListener("click", async () => {
+      if (!confirm("Confirm return?")) return;
+      try {
+        await returnLaptop(laptopId, laptop.activeCheckoutId);
+        showToast("Laptop returned!", "success");
+      } catch(err) { showToast(err.message, "error"); }
+    });
+  }
+</script>
+
+</body>
+</html>

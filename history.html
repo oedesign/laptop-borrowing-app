@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My History — LaptopTrack</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-brand">Laptop<span>Track</span></div><div class="spinner dark"></div></div>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="topbar"><button class="menu-toggle" id="menu-toggle">☰</button><span class="topbar-brand">Laptop<span>Track</span></span></div>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><div class="brand-icon">💻</div><div class="brand-name">Laptop<span>Track</span></div></div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a href="dashboard.html" class="nav-link" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a href="history.html"   class="nav-link active" data-page="history"><span class="nav-icon">📋</span> My History</a>
+      <span class="nav-section-label">Account</span>
+      <a href="#" class="nav-link" data-page="profile"><span class="nav-icon">👤</span> Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user"><div class="avatar">—</div><div class="user-info"><div class="user-name">Loading...</div><div class="user-role">Student</div></div></div>
+      <button class="btn-logout" id="btn-logout">↩ Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>📋 Borrowing History</h1>
+      <p>A complete record of your laptop checkouts and returns.</p>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="toolbar mb-2">
+      <select id="history-filter" class="form-control filter-select">
+        <option value="">All Records</option>
+        <option value="active">Active</option>
+        <option value="returned">Returned</option>
+        <option value="overdue">Overdue</option>
+      </select>
+    </div>
+
+    <div id="history-list" class="history-list">
+      <div class="empty-state"><div class="empty-icon">⏳</div><h3>Loading history…</h3></div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="dashboard.html" class="bottom-nav-link" data-page="dashboard"><span class="bnl-icon">🏠</span> Home</a>
+    <a href="history.html"   class="bottom-nav-link active" data-page="history"><span class="bnl-icon">📋</span> History</a>
+    <a href="#"              class="bottom-nav-link" data-page="profile"><span class="bnl-icon">👤</span> Profile</a>
+  </div>
+</nav>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { requireAuth, logoutUser } from "./js/auth.js";
+  import { onUserHistoryChange }     from "./js/history.js";
+  import { getLaptop }               from "./js/laptops.js";
+  import { showToast, hideLoader, initSidebar, setSidebarUser, renderEmpty } from "./js/ui.js";
+  import { checkoutBadge, formatDateTime, timeAgo } from "./js/utils.js";
+
+  let allHistory = [];
+
+  requireAuth((user, profile) => {
+    initSidebar();
+    setSidebarUser(profile);
+    hideLoader();
+    document.getElementById("btn-logout")?.addEventListener("click", () => logoutUser());
+
+    // Real-time history
+    onUserHistoryChange(user.uid, (records) => {
+      allHistory = records;
+      renderHistory(records);
+    });
+
+    document.getElementById("history-filter")?.addEventListener("change", (e) => {
+      const filtered = e.target.value
+        ? allHistory.filter(r => r.status === e.target.value)
+        : allHistory;
+      renderHistory(filtered);
+    });
+  });
+
+  async function renderHistory(records) {
+    const list = document.getElementById("history-list");
+    if (!records.length) {
+      renderEmpty(list, { icon: "📋", title: "No history yet", message: "Borrow a laptop to see your records here." });
+      return;
+    }
+
+    // Fetch laptop names (cache by ID)
+    const laptopCache = {};
+    for (const r of records) {
+      if (!laptopCache[r.laptopId]) {
+        try { laptopCache[r.laptopId] = await getLaptop(r.laptopId); } catch {}
+      }
+    }
+
+    list.innerHTML = records.map(r => {
+      const laptop = laptopCache[r.laptopId];
+      const isOverdue = r.status === "overdue";
+      const isActive  = r.status === "active";
+      const cls = isOverdue ? "overdue" : isActive ? "active" : "returned";
+      const icon = isOverdue ? "⚠️" : isActive ? "📤" : "✅";
+      return `
+        <div class="history-item ${cls}">
+          <div class="history-icon ${cls}">${icon}</div>
+          <div class="history-body">
+            <div class="history-title">${laptop?.laptopName || r.laptopId}</div>
+            <div class="history-meta">
+              ${checkoutBadge(r.status)} ·
+              Checked out: ${formatDateTime(r.checkoutTime)} ·
+              Due: ${formatDateTime(r.dueTime)}
+              ${r.returnTime ? ` · Returned: ${formatDateTime(r.returnTime)}` : ""}
+            </div>
+          </div>
+          <div class="history-time">${timeAgo(r.checkoutTime)}</div>
+        </div>
+      `;
+    }).join("");
+  }
+</script>
+
+</body>
+</html>

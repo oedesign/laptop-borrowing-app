@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — LaptopTrack</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+
+<div id="page-loader"><div class="loader-brand">Laptop<span>Track</span></div><div class="spinner dark"></div></div>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<div class="topbar">
+  <button class="menu-toggle" id="menu-toggle">☰</button>
+  <span class="topbar-brand">Laptop<span>Track</span> <span style="font-size:.7rem;opacity:.6;margin-left:.25rem">Admin</span></span>
+</div>
+
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💻</div>
+      <div class="brand-name">Laptop<span>Track</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Admin</span>
+      <a href="#" class="nav-link active" data-tab="overview"  onclick="switchTab('overview',this)">
+        <span class="nav-icon">📊</span> Overview
+      </a>
+      <a href="#" class="nav-link" data-tab="laptops" onclick="switchTab('laptops',this)">
+        <span class="nav-icon">💻</span> Laptops
+      </a>
+      <a href="#" class="nav-link" data-tab="checkouts" onclick="switchTab('checkouts',this)">
+        <span class="nav-icon">📤</span> Active Checkouts
+      </a>
+      <a href="#" class="nav-link" data-tab="history" onclick="switchTab('history',this)">
+        <span class="nav-icon">📋</span> All History
+      </a>
+      <a href="#" class="nav-link" data-tab="users" onclick="switchTab('users',this)">
+        <span class="nav-icon">👥</span> Users
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar">—</div>
+        <div class="user-info">
+          <div class="user-name">Loading...</div>
+          <div class="user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">↩ Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- ── TAB: Overview ── -->
+    <div id="tab-overview" class="tab-panel">
+      <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p>Full overview of laptop availability and system activity.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">💻</div>
+          <div><div class="stat-label">Total Laptops</div><div class="stat-value" id="stat-total">—</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div><div class="stat-label">Available</div><div class="stat-value" id="stat-available">—</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">📤</div>
+          <div><div class="stat-label">Borrowed</div><div class="stat-value" id="stat-borrowed">—</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">⚠️</div>
+          <div><div class="stat-label">Overdue</div><div class="stat-value" id="stat-overdue">—</div></div>
+        </div>
+      </div>
+
+      <!-- Overdue alert table -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">⚠️ Overdue Laptops</span>
+          <button class="btn btn-outline btn-sm" onclick="switchTab('checkouts', document.querySelector('[data-tab=checkouts]'))">View All</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="table" id="overdue-table">
+            <thead>
+              <tr>
+                <th>Laptop</th><th>Borrower</th><th>Due Time</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="overdue-tbody">
+              <tr><td colspan="4" class="text-center text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: Laptops ── -->
+    <div id="tab-laptops" class="tab-panel" style="display:none">
+      <div class="page-header">
+        <h1>💻 Manage Laptops</h1>
+        <p>Add, edit, and remove laptops from the inventory.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="laptop-search" class="form-control" placeholder="Search laptops…" />
+        </div>
+        <select id="laptop-status-filter" class="form-control filter-select">
+          <option value="">All Statuses</option>
+          <option value="available">Available</option>
+          <option value="borrowed">Borrowed</option>
+          <option value="overdue">Overdue</option>
+        </select>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Laptop</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr><th>#</th><th>Name</th><th>Brand / Model</th><th>Serial</th><th>Status</th><th>Borrower</th><th>Due</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="laptops-tbody">
+              <tr><td colspan="8" class="text-center text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: Active Checkouts ── -->
+    <div id="tab-checkouts" class="tab-panel" style="display:none">
+      <div class="page-header">
+        <h1>📤 Active Checkouts</h1>
+        <p>All currently borrowed and overdue laptops.</p>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr><th>Laptop</th><th>Borrower</th><th>Checked Out</th><th>Due</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="checkouts-tbody">
+              <tr><td colspan="6" class="text-center text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: All History ── -->
+    <div id="tab-history" class="tab-panel" style="display:none">
+      <div class="page-header">
+        <h1>📋 Full Borrowing History</h1>
+        <p>Complete log of all checkout and return activity.</p>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr><th>Laptop</th><th>Borrower</th><th>Checked Out</th><th>Due</th><th>Returned</th><th>Status</th></tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr><td colspan="6" class="text-center text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: Users ── -->
+    <div id="tab-users" class="tab-panel" style="display:none">
+      <div class="page-header">
+        <h1>👥 Users</h1>
+        <p>All registered accounts on the platform.</p>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5" class="text-center text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /.app-layout -->
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="#" class="bottom-nav-link active" onclick="switchTab('overview',this)"><span class="bnl-icon">📊</span>Overview</a>
+    <a href="#" class="bottom-nav-link" onclick="switchTab('laptops',this)"><span class="bnl-icon">💻</span>Laptops</a>
+    <a href="#" class="bottom-nav-link" onclick="switchTab('checkouts',this)"><span class="bnl-icon">📤</span>Active</a>
+    <a href="#" class="bottom-nav-link" onclick="switchTab('users',this)"><span class="bnl-icon">👥</span>Users</a>
+  </div>
+</nav>
+
+<!-- ── Add / Edit Laptop Modal ── -->
+<div class="modal-overlay" id="laptop-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="laptop-modal-title">Add Laptop</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-laptop-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Laptop Name *</label>
+          <input type="text" id="f-laptopName" class="form-control" placeholder="e.g. Laptop 01" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brand *</label>
+          <input type="text" id="f-brand" class="form-control" placeholder="Dell, HP, Lenovo…" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Model *</label>
+          <input type="text" id="f-model" class="form-control" placeholder="e.g. Inspiron 15" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Serial Number</label>
+          <input type="text" id="f-serial" class="form-control" placeholder="Optional" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea id="f-notes" class="form-control" rows="2" placeholder="Any notes about this device…"></textarea>
+      </div>
+      <div class="form-error show" id="laptop-form-error" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close">Cancel</button>
+      <button class="btn btn-primary" id="save-laptop-btn">Save Laptop</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Delete Modal ── -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Delete Laptop</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong id="delete-laptop-name"></strong>? This cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script type="module">
+  import { requireAdmin, logoutUser }     from "./js/auth.js";
+  import { onLaptopsChange, syncOverdueStatus } from "./js/laptops.js";
+  import { onAllHistoryChange, getActiveCheckouts } from "./js/history.js";
+  import { onUsersChange, addLaptop, updateLaptop, deleteLaptop, setUserRole } from "./js/admin.js";
+  import { returnLaptop }                from "./js/returns.js";
+  import {
+    showToast, hideLoader, initSidebar, initModals,
+    setSidebarUser, updateStats, openModal, closeModal, setButtonLoading
+  } from "./js/ui.js";
+  import { statusBadge, checkoutBadge, formatDateTime, timeAgo, getInitials, filterLaptops, debounce } from "./js/utils.js";
+
+  let allLaptops  = [];
+  let allHistory  = [];
+  let allUsers    = [];
+  let deletingId  = null;
+
+  requireAdmin((user, profile) => {
+    initSidebar();
+    initModals();
+    setSidebarUser(profile);
+    hideLoader();
+    document.getElementById("btn-logout")?.addEventListener("click", () => logoutUser());
+
+    syncOverdueStatus();
+
+    // Real-time listeners
+    onLaptopsChange((laptops) => {
+      allLaptops = laptops;
+      updateStats({
+        total:     laptops.length,
+        available: laptops.filter(l=>l.status==="available").length,
+        borrowed:  laptops.filter(l=>l.status==="borrowed").length,
+        overdue:   laptops.filter(l=>l.status==="overdue").length
+      });
+      renderLaptopsTable(laptops);
+      renderOverdueTable(laptops.filter(l=>l.status==="overdue"));
+      renderCheckoutsTable(laptops.filter(l=>l.status!=="available"));
+    });
+
+    onAllHistoryChange((records) => {
+      allHistory = records;
+      renderHistoryTable(records);
+    });
+
+    onUsersChange((users) => {
+      allUsers = users;
+      renderUsersTable(users);
+    });
+
+    // Search / filter for laptops tab
+    const search = document.getElementById("laptop-search");
+    const sfilter = document.getElementById("laptop-status-filter");
+    const applyFilter = debounce(() => {
+      renderLaptopsTable(filterLaptops(allLaptops, {
+        search: search?.value || "", status: sfilter?.value || ""
+      }));
+    }, 250);
+    search?.addEventListener("input", applyFilter);
+    sfilter?.addEventListener("change", applyFilter);
+
+    // Save laptop (add / edit)
+    document.getElementById("save-laptop-btn")?.addEventListener("click", saveLaptop);
+
+    // Confirm delete
+    document.getElementById("confirm-delete-btn")?.addEventListener("click", async () => {
+      if (!deletingId) return;
+      try {
+        await deleteLaptop(deletingId);
+        closeModal("delete-modal");
+        showToast("Laptop deleted.", "success");
+      } catch(e) { showToast(e.message, "error"); }
+    });
+  });
+
+  // ── Tab switching ──
+  window.switchTab = function(tab, el) {
+    document.querySelectorAll(".tab-panel").forEach(p => p.style.display = "none");
+    document.getElementById(`tab-${tab}`).style.display = "";
+    document.querySelectorAll(".nav-link[data-tab], .bottom-nav-link").forEach(a => a.classList.remove("active"));
+    if (el) el.classList.add("active");
+  };
+
+  // ── Render: Overdue quick table ──
+  function renderOverdueTable(laptops) {
+    const tbody = document.getElementById("overdue-tbody");
+    if (!laptops.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding:1.5rem">✅ No overdue laptops</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = laptops.map(l => `
+      <tr>
+        <td><strong>${l.laptopName}</strong></td>
+        <td>${l.borrowerName || "—"}</td>
+        <td class="overdue-highlight">${formatDateTime(l.dueTime)}</td>
+        <td>
+          <button class="btn btn-success btn-sm" onclick="adminReturn('${l.id}','${l.activeCheckoutId}')">Mark Returned</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  // ── Render: Laptops table ──
+  function renderLaptopsTable(laptops) {
+    const tbody = document.getElementById("laptops-tbody");
+    if (!laptops.length) {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:1.5rem">No laptops found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = laptops.map((l,i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${l.laptopName}</strong></td>
+        <td>${l.brand} · ${l.model}</td>
+        <td>${l.serialNumber || "—"}</td>
+        <td>${statusBadge(l.status)}</td>
+        <td>${l.borrowerName || "—"}</td>
+        <td>${l.dueTime ? formatDateTime(l.dueTime) : "—"}</td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-outline btn-sm" onclick="openEditModal(${JSON.stringify(l).replace(/"/g,'&quot;')})">Edit</button>
+            ${l.status !== "available"
+              ? `<button class="btn btn-success btn-sm" onclick="adminReturn('${l.id}','${l.activeCheckoutId}')">Return</button>`
+              : ""}
+            <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${l.id}','${l.laptopName}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  // ── Render: Active checkouts table ──
+  function renderCheckoutsTable(laptops) {
+    const tbody = document.getElementById("checkouts-tbody");
+    if (!laptops.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No active checkouts.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = laptops.map(l => `
+      <tr>
+        <td><strong>${l.laptopName}</strong></td>
+        <td>${l.borrowerName || "—"}</td>
+        <td>${formatDateTime(l.checkoutTime)}</td>
+        <td class="${l.status==='overdue'?'overdue-highlight':''}">${formatDateTime(l.dueTime)}</td>
+        <td>${statusBadge(l.status)}</td>
+        <td>
+          <button class="btn btn-success btn-sm" onclick="adminReturn('${l.id}','${l.activeCheckoutId}')">Mark Returned</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  // ── Render: Full history table ──
+  function renderHistoryTable(records) {
+    const tbody = document.getElementById("history-tbody");
+    if (!records.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:1.5rem">No records yet.</td></tr>`;
+      return;
+    }
+    // Build laptopId → name map from allLaptops
+    const nameMap = {};
+    allLaptops.forEach(l => nameMap[l.id] = l.laptopName);
+
+    tbody.innerHTML = records.map(r => `
+      <tr>
+        <td><strong>${nameMap[r.laptopId] || r.laptopId}</strong></td>
+        <td>${r.borrowerName || "—"}</td>
+        <td>${formatDateTime(r.checkoutTime)}</td>
+        <td class="${r.status==='overdue'?'overdue-highlight':''}">${formatDateTime(r.dueTime)}</td>
+        <td>${r.returnTime ? formatDateTime(r.returnTime) : "—"}</td>
+        <td>${checkoutBadge(r.status)}</td>
+      </tr>
+    `).join("");
+  }
+
+  // ── Render: Users table ──
+  function renderUsersTable(users) {
+    const tbody = document.getElementById("users-tbody");
+    if (!users.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding:1.5rem">No users found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="avatar-sm">${getInitials(u.displayName || u.firstName)}</div>
+            <div>
+              <div class="fw-600">${u.displayName || u.firstName}</div>
+              <div class="fs-sm text-muted">${u.email}</div>
+            </div>
+          </div>
+        </td>
+        <td>${u.email}</td>
+        <td>${u.role === "admin" ? '<span class="badge badge-admin">Admin</span>' : '<span class="badge badge-student">Student</span>'}</td>
+        <td>${formatDateTime(u.createdAt)}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="toggleRole('${u.id}','${u.role}')">
+            ${u.role === "admin" ? "Set Student" : "Set Admin"}
+          </button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  // ── Admin return ──
+  window.adminReturn = async function(laptopId, checkoutId) {
+    if (!confirm("Mark this laptop as returned?")) return;
+    try {
+      await returnLaptop(laptopId, checkoutId);
+      showToast("Laptop marked as returned.", "success");
+    } catch(e) { showToast(e.message, "error"); }
+  };
+
+  // ── Add modal ──
+  window.openAddModal = function() {
+    document.getElementById("laptop-modal-title").textContent = "Add Laptop";
+    document.getElementById("edit-laptop-id").value = "";
+    ["f-laptopName","f-brand","f-model","f-serial","f-notes"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    openModal("laptop-modal");
+  };
+
+  // ── Edit modal ──
+  window.openEditModal = function(laptop) {
+    document.getElementById("laptop-modal-title").textContent = "Edit Laptop";
+    document.getElementById("edit-laptop-id").value = laptop.id;
+    document.getElementById("f-laptopName").value = laptop.laptopName || "";
+    document.getElementById("f-brand").value      = laptop.brand || "";
+    document.getElementById("f-model").value      = laptop.model || "";
+    document.getElementById("f-serial").value     = laptop.serialNumber || "";
+    document.getElementById("f-notes").value      = laptop.notes || "";
+    openModal("laptop-modal");
+  };
+
+  // ── Delete modal ──
+  window.openDeleteModal = function(id, name) {
+    deletingId = id;
+    document.getElementById("delete-laptop-name").textContent = name;
+    openModal("delete-modal");
+  };
+
+  // ── Save laptop (add or edit) ──
+  async function saveLaptop() {
+    const id     = document.getElementById("edit-laptop-id").value;
+    const name   = document.getElementById("f-laptopName").value.trim();
+    const brand  = document.getElementById("f-brand").value.trim();
+    const model  = document.getElementById("f-model").value.trim();
+    const serial = document.getElementById("f-serial").value.trim();
+    const notes  = document.getElementById("f-notes").value.trim();
+    const errEl  = document.getElementById("laptop-form-error");
+
+    if (!name || !brand || !model) {
+      errEl.textContent = "Name, brand, and model are required.";
+      errEl.style.display = "block";
+      return;
+    }
+    errEl.style.display = "none";
+
+    const btn = document.getElementById("save-laptop-btn");
+    setButtonLoading(btn, true);
+
+    try {
+      if (id) {
+        await updateLaptop(id, { laptopName: name, brand, model, serialNumber: serial, notes });
+        showToast("Laptop updated!", "success");
+      } else {
+        await addLaptop({ laptopName: name, brand, model, serialNumber: serial, notes });
+        showToast("Laptop added!", "success");
+      }
+      closeModal("laptop-modal");
+    } catch(e) {
+      showToast(e.message, "error");
+    } finally {
+      setButtonLoading(btn, false);
+    }
+  }
+
+  // ── Toggle user role ──
+  window.toggleRole = async function(userId, currentRole) {
+    const newRole = currentRole === "admin" ? "student" : "admin";
+    if (!confirm(`Change this user to ${newRole}?`)) return;
+    try {
+      await setUserRole(userId, newRole);
+      showToast(`User role updated to ${newRole}.`, "success");
+    } catch(e) { showToast(e.message, "error"); }
+  };
+</script>
+
+</body>
+</html>

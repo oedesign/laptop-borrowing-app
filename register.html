@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — LaptopTrack</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- Left branding panel -->
+  <div class="auth-panel-left">
+    <div class="auth-brand">
+      <div class="auth-brand-icon">💻</div>
+      <div class="auth-brand-name">Laptop<span>Track</span></div>
+    </div>
+    <div class="auth-hero">
+      <h2>Join <span>LaptopTrack</span> today.</h2>
+      <p>Create your account and start borrowing or managing campus laptops in seconds.</p>
+    </div>
+    <div class="auth-features">
+      <div class="auth-feature">
+        <div class="auth-feature-icon">🎓</div>
+        Students — borrow available devices instantly
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">🧑‍💼</div>
+        Admins — manage the full lending inventory
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">📜</div>
+        Full borrowing history at your fingertips
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="auth-panel-right">
+    <div class="auth-form-wrap">
+      <h1>Create account</h1>
+      <p class="auth-subtitle">
+        Already have an account? <a href="login.html">Sign in</a>
+      </p>
+
+      <div class="auth-alert" id="auth-alert"></div>
+
+      <!-- Role selector -->
+      <div class="form-group">
+        <label class="form-label">I am a…</label>
+        <div class="role-selector">
+          <input type="radio" name="role" id="role-student" value="student" class="role-option" checked />
+          <label class="role-label" for="role-student">
+            <span class="role-icon">🎓</span>
+            <span class="role-title">Student</span>
+            <span class="role-desc">Borrow laptops</span>
+          </label>
+
+          <input type="radio" name="role" id="role-admin" value="admin" class="role-option" />
+          <label class="role-label" for="role-admin">
+            <span class="role-icon">🧑‍💼</span>
+            <span class="role-title">Admin</span>
+            <span class="role-desc">Manage inventory</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="first-name">First name</label>
+          <input type="text" id="first-name" class="form-control" placeholder="Oluwaseyi" autocomplete="given-name" />
+          <span class="form-error" id="fname-error">First name required.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="last-name">Last name</label>
+          <input type="text" id="last-name" class="form-control" placeholder="Elujoba" autocomplete="family-name" />
+          <span class="form-error" id="lname-error">Last name required.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email address</label>
+        <input type="email" id="email" class="form-control" placeholder="you@example.com" autocomplete="email" />
+        <span class="form-error" id="email-error">Valid email required.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-group">
+          <input type="password" id="password" class="form-control" placeholder="At least 6 characters" autocomplete="new-password" />
+          <button type="button" class="input-toggle" id="toggle-password">👁</button>
+        </div>
+        <span class="form-error" id="pass-error">Password must be at least 6 characters.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm-password">Confirm password</label>
+        <input type="password" id="confirm-password" class="form-control" placeholder="Repeat password" autocomplete="new-password" />
+        <span class="form-error" id="cpass-error">Passwords do not match.</span>
+      </div>
+
+      <button class="btn btn-primary auth-submit" id="register-btn">
+        Create Account
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { registerUser, redirectIfAuthed } from "./js/auth.js";
+
+  redirectIfAuthed("/dashboard.html");
+
+  const btn     = document.getElementById("register-btn");
+  const alert   = document.getElementById("auth-alert");
+  const toggleP = document.getElementById("toggle-password");
+  const passIn  = document.getElementById("password");
+
+  toggleP.addEventListener("click", () => {
+    passIn.type = passIn.type === "password" ? "text" : "password";
+    toggleP.textContent = passIn.type === "password" ? "👁" : "🙈";
+  });
+
+  function showAlert(msg, type = "error") {
+    alert.textContent = msg;
+    alert.className = `auth-alert ${type} show`;
+  }
+
+  function val(id)  { return document.getElementById(id)?.value.trim() || ""; }
+  function err(id)  { document.getElementById(id)?.classList.add("show"); }
+  function clearErr(id) { document.getElementById(id)?.classList.remove("show"); }
+
+  function validate() {
+    let ok = true;
+    ["fname-error","lname-error","email-error","pass-error","cpass-error"].forEach(clearErr);
+
+    if (!val("first-name"))  { err("fname-error"); ok = false; }
+    if (!val("last-name"))   { err("lname-error"); ok = false; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val("email"))) { err("email-error"); ok = false; }
+    if (val("password").length < 6)  { err("pass-error"); ok = false; }
+    if (val("password") !== val("confirm-password")) { err("cpass-error"); ok = false; }
+    return ok;
+  }
+
+  btn.addEventListener("click", async () => {
+    if (!validate()) return;
+    btn.innerHTML = `<span class="spinner"></span> Creating account...`;
+    btn.disabled = true;
+
+    const role = document.querySelector('input[name="role"]:checked')?.value || "student";
+    try {
+      await registerUser({
+        firstName: val("first-name"),
+        lastName:  val("last-name"),
+        email:     val("email"),
+        password:  val("password"),
+        role
+      });
+      window.location.href = "/dashboard.html";
+    } catch (e) {
+      const msgs = {
+        "auth/email-already-in-use": "An account with this email already exists.",
+        "auth/weak-password":        "Password is too weak.",
+        "auth/invalid-email":        "Invalid email address."
+      };
+      showAlert(msgs[e.code] || "Registration failed. Please try again.");
+      btn.innerHTML = "Create Account";
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
