@@ -39,17 +39,15 @@ export async function registerUser({ firstName, lastName, email, password, role 
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Set display name
   await updateProfile(user, { displayName: `${firstName} ${lastName}` });
 
-  // Save profile to Firestore
   await setDoc(doc(db, COLLECTIONS.USERS, user.uid), {
     uid: user.uid,
     firstName,
     lastName,
     displayName: `${firstName} ${lastName}`,
     email,
-    role,               // "student" | "admin"
+    role,
     createdAt: serverTimestamp(),
     borrowingCount: 0
   });
@@ -66,7 +64,7 @@ export async function loginUser(email, password) {
 // ── Logout ──
 export async function logoutUser() {
   await signOut(auth);
-  window.location.href = "/login.html";
+  window.location.href = "./login.html";
 }
 
 // ── Fetch user profile from Firestore ──
@@ -76,19 +74,23 @@ export async function getUserProfile(uid) {
 }
 
 // ── Get cached current user & profile ──
-export function getCurrentUser()    { return currentUser; }
-export function getCurrentProfile() { return currentProfile; }
+export function getCurrentUser() {
+  return currentUser;
+}
+
+export function getCurrentProfile() {
+  return currentProfile;
+}
 
 // ── Route guards ──
-// Call on every protected page — redirects to login if not authed
 export function requireAuth(onReady) {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      window.location.href = "/login.html";
+      window.location.href = "./login.html";
       return;
     }
     const profile = await getUserProfile(user.uid);
-    currentUser    = user;
+    currentUser = user;
     currentProfile = profile;
     if (onReady) onReady(user, profile);
   });
@@ -99,7 +101,7 @@ export function requireAdmin(onReady) {
   requireAuth(async (user, profile) => {
     if (profile?.role !== "admin") {
       showToast("Access denied: Admin only.", "error");
-      window.location.href = "/dashboard.html";
+      window.location.href = "./dashboard.html";
       return;
     }
     if (onReady) onReady(user, profile);
@@ -107,7 +109,7 @@ export function requireAdmin(onReady) {
 }
 
 // Redirect already-logged-in users away from login/register
-export function redirectIfAuthed(redirectTo = "/dashboard.html") {
+export function redirectIfAuthed(redirectTo = "./dashboard.html") {
   onAuthStateChanged(auth, (user) => {
     if (user) window.location.href = redirectTo;
   });

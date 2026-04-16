@@ -2,11 +2,10 @@
 // main.js — Student Dashboard (with localStorage integration)
 // ============================================================
 
-import { requireAuth, logoutUser }   from "./auth.js";
-import { onLaptopsChange }           from "./laptops.js";
-import { checkoutLaptop }            from "./checkout.js";
-import { returnLaptop }              from "./returns.js";
-import { syncOverdueStatus }         from "./laptops.js";
+import { requireAuth, logoutUser } from "./auth.js";
+import { onLaptopsChange, syncOverdueStatus } from "./laptops.js";
+import { checkoutLaptop } from "./checkout.js";
+import { returnLaptop } from "./returns.js";
 import {
   showToast, hideLoader, initSidebar, initModals,
   setSidebarUser, setActiveNav, updateStats,
@@ -19,34 +18,32 @@ import {
 import {
   initTheme, saveSearchState, restoreSearchInputs,
   saveLoanHours, restoreLoanHours, loadLoanHours,
-  saveUserPrefs, loadUserPrefs, clearUserPrefs,
+  saveUserPrefs, clearUserPrefs,
   saveLastPage, applyTheme, loadTheme
 } from "./storage.js";
 
 // ── State ──
-let allLaptops  = [];
+let allLaptops = [];
 let currentUser = null;
 let currentProfile = null;
 
 // ── Boot ──
 requireAuth((user, profile) => {
-  currentUser    = user;
+  currentUser = user;
   currentProfile = profile;
 
-  // 1. Cache user prefs in localStorage for instant sidebar render
   saveUserPrefs(profile);
-  // 2. Track last visited page
   saveLastPage("dashboard");
 
   if (profile?.role === "admin") {
-    window.location.href = "/admin.html";
+    window.location.href = "./admin.html";
     return;
   }
+
   initUI();
 });
 
 function initUI() {
-  // Apply saved theme immediately (localStorage → data-theme attribute)
   initTheme();
 
   initSidebar();
@@ -56,14 +53,14 @@ function initUI() {
   hideLoader();
 
   const nameEl = document.getElementById("welcome-name");
-  if (nameEl) nameEl.textContent = currentProfile?.firstName || currentUser.displayName;
+  if (nameEl) {
+    nameEl.textContent = currentProfile?.firstName || currentUser.displayName;
+  }
 
   syncOverdueStatus();
 
-  // ── Restore last search + filter state from localStorage ──
   restoreSearchInputs("search-input", "status-filter");
 
-  // ── Real-time Firestore listener (Firebase REST/SDK = third-party API) ──
   onLaptopsChange((laptops) => {
     allLaptops = laptops;
     const searchEl = document.getElementById("search-input");
@@ -72,70 +69,70 @@ function initUI() {
       search: searchEl?.value || "",
       status: filterEl?.value || ""
     });
+
     renderLaptops(filtered, searchEl?.value || "");
     updateStats({
-      total:     laptops.length,
+      total: laptops.length,
       available: laptops.filter(l => l.status === "available").length,
-      borrowed:  laptops.filter(l => l.status === "borrowed").length,
-      overdue:   laptops.filter(l => l.status === "overdue").length
+      borrowed: laptops.filter(l => l.status === "borrowed").length,
+      overdue: laptops.filter(l => l.status === "overdue").length
     });
   });
 
-  // ── Search & filter → persist to localStorage on every keystroke ──
-  const searchInput  = document.getElementById("search-input");
+  const searchInput = document.getElementById("search-input");
   const statusFilter = document.getElementById("status-filter");
 
   const applyFilter = debounce(() => {
-    const term   = searchInput?.value  || "";
+    const term = searchInput?.value || "";
     const status = statusFilter?.value || "";
-    saveSearchState({ searchTerm: term, statusFilter: status }); // localStorage write
+    saveSearchState({ searchTerm: term, statusFilter: status });
     renderLaptops(filterLaptops(allLaptops, { search: term, status }), term);
   }, 250);
 
-  searchInput?.addEventListener("input",   applyFilter);
+  searchInput?.addEventListener("input", applyFilter);
   statusFilter?.addEventListener("change", applyFilter);
 
-  // ── Theme toggle (localStorage: lt_theme) ──
   const themeToggle = document.getElementById("theme-toggle");
   if (themeToggle) {
     themeToggle.textContent = loadTheme() === "dark" ? "☀️" : "🌙";
     themeToggle.addEventListener("click", () => {
       const next = loadTheme() === "dark" ? "light" : "dark";
-      applyTheme(next);                         // saves to localStorage + applies
+      applyTheme(next);
       themeToggle.textContent = next === "dark" ? "☀️" : "🌙";
       showToast(`Switched to ${next} mode`, "default");
     });
   }
 
-  // ── Logout → clear user prefs from localStorage ──
   document.getElementById("btn-logout")?.addEventListener("click", () => {
     clearUserPrefs();
     logoutUser();
   });
 
-  // ── Loan hours preference (localStorage: lt_loan_hours) ──
   document.getElementById("loan-hours")?.addEventListener("change", (e) => {
-    saveLoanHours(parseInt(e.target.value)); // persist preference
+    saveLoanHours(parseInt(e.target.value));
   });
 
-  // ── Confirm borrow ──
   document.getElementById("confirm-borrow-btn")?.addEventListener("click", async (e) => {
-    const btn      = e.currentTarget;
+    const btn = e.currentTarget;
     const laptopId = btn.getAttribute("data-laptop-id");
-    const hoursEl  = document.getElementById("loan-hours");
-    const hours    = parseInt(hoursEl?.value || loadLoanHours());
+    const hoursEl = document.getElementById("loan-hours");
+    const hours = parseInt(hoursEl?.value || loadLoanHours());
 
-    saveLoanHours(hours); // remember this preference
+    saveLoanHours(hours);
 
     setButtonLoading(btn, true);
     try {
       const { dueTime } = await checkoutLaptop(laptopId, {
-        uid:         currentUser.uid,
+        uid: currentUser.uid,
         displayName: currentUser.displayName,
-        email:       currentUser.email
+        email: currentUser.email
       }, hours);
+
       document.getElementById("borrow-modal")?.classList.remove("open");
-      showToast(`Borrowed! Due: ${dueTime.toLocaleTimeString("en-NG", { hour:"2-digit", minute:"2-digit" })}`, "success");
+      showToast(
+        `Borrowed! Due: ${dueTime.toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}`,
+        "success"
+      );
     } catch (err) {
       showToast("Checkout failed: " + err.message, "error");
     } finally {
@@ -150,7 +147,11 @@ function renderLaptops(laptops, searchTerm = "") {
   if (!grid) return;
 
   if (!laptops.length) {
-    renderEmpty(grid, { icon: "💻", title: "No laptops found", message: "Try adjusting your search or filter." });
+    renderEmpty(grid, {
+      icon: "💻",
+      title: "No laptops found",
+      message: "Try adjusting your search or filter."
+    });
     return;
   }
 
@@ -183,7 +184,7 @@ function renderLaptops(laptops, searchTerm = "") {
 window.borrowLaptop = function(laptopId, laptopName) {
   document.getElementById("modal-laptop-name").textContent = laptopName;
   document.getElementById("confirm-borrow-btn")?.setAttribute("data-laptop-id", laptopId);
-  restoreLoanHours("loan-hours"); // restore saved preference from localStorage
+  restoreLoanHours("loan-hours");
   document.getElementById("borrow-modal")?.classList.add("open");
 };
 
